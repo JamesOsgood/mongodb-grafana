@@ -15,11 +15,11 @@ Allows MongoDB to be used as a data source for Grafana by providing a proxy to c
 * Copy the whole mongodb-grafana dir into the Grafana plugins dir ( /usr/local/var/lib/grafana/plugins )
 * Restart the Grafana server. If installed via Homebrew, this will be `brew services restart grafana`
 
-### Install Start the MongoDB proxy server
+### Install and Start the MongoDB proxy server
 
 * Open a command prompt in the mongodb-grafana directory
 * Run `npm install` to install the node.js dependencies
-* Run `npm server` to start the REST API proxy to MongoDB. By default, the server listens on http://localhost:3333
+* Run `npm run server` to start the REST API proxy to MongoDB. By default, the server listens on http://localhost:3333
 
 ## Examples
 
@@ -48,7 +48,7 @@ The query here is
 db.sensor_value.aggregate ( [ 
 { "$match" :    {   "sensor_type" : "$sensor",   "host_name" : "$host",   "ts" : { "$gte" : "$from", "$lte" : "$to" } }  },        
  {"$sort" : {"ts" : 1}},            
- {"$project" :   {  "name" : "value",   "value" : "$sensor_value",  "ts" : "$ts_epoch",  "_id" : 0} } ])
+ {"$project" :   {  "name" : "value",   "value" : "$sensor_value",  "ts" : "$ts",  "_id" : 0} } ])
  ```
 
  The API is expecting back documents with the following fields

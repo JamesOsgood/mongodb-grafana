@@ -181,19 +181,26 @@ function runAggregateQuery(url, dbName, queryArgs, res, next )
           }
           else
           {
-            datapoints = []
-            for ( var i = 0; i < docs.length; i++)
+            try
             {
-              var doc = docs[i]
-              tg = doc.name
-              datapoints.push([doc['value'], doc['ts'] * 1000])
+              datapoints = []
+              for ( var i = 0; i < docs.length; i++)
+              {
+                var doc = docs[i]
+                tg = doc.name
+                datapoints.push([doc['value'], doc['ts'].getTime()])
+              }
+      
+              client.close();
+              output = []
+              output.push({ 'target' : tg, 'datapoints' : datapoints })
+              res.json(output);
+              next()
             }
-    
-            client.close();
-            output = []
-            output.push({ 'target' : tg, 'datapoints' : datapoints })
-            res.json(output);
-            next()
+            catch(err)
+            {
+              next(err)
+            }
           }
         })
       }

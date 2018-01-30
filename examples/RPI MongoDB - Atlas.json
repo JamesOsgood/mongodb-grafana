@@ -105,7 +105,7 @@
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
-              "target": "db.sensor_value.aggregate ( [ \n{ \"$match\" :    {   \"sensor_type\" : \"$sensor\",   \"host_name\" : \"$host\",   \"ts\" : { \"$gte\" : \"$from\", \"$lte\" : \"$to\" } }  },        \n {\"$sort\" : {\"ts\" : 1}},            \n {\"$project\" :   {  \"name\" : \"value\",   \"value\" : \"$sensor_value\",  \"ts\" : \"$ts_epoch\",  \"_id\" : 0} } ])",
+              "target": "db.sensor_value.aggregate ( [ \n{ \"$match\" :    {   \"sensor_type\" : \"$sensor\",   \"host_name\" : \"$host\",   \"ts\" : { \"$gte\" : \"$from\", \"$lte\" : \"$to\" } }  },        \n {\"$sort\" : {\"ts\" : 1}},            \n {\"$project\" :   {  \"name\" : \"value\",   \"value\" : \"$sensor_value\",  \"ts\" : \"$ts\",  \"_id\" : 0} } ])",
               "timeInterval": "auto_gf",
               "type": "timeserie",
               "whereClauses": []
@@ -234,5 +234,5 @@
   },
   "timezone": "",
   "title": "RPI Mongo - Atlas",
-  "version": 3
+  "version": 4
 }
