@@ -1,0 +1,25 @@
+<datasource-http-settings current="ctrl.current">
+</datasource-http-settings>
+
+<h3 class="page-heading">MongoDB details</h3>
+
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-10">MongoDB URL</span>
+			<input class="gf-form-input width-30" type="text"
+				ng-model='ctrl.current.jsonData.mongodb_url'
+				placeholder="mongodb://localhost:27017" required>
+			</input>
+		</div>
+
+		<div class="gf-form">
+			<span class="gf-form-label width-10">MongoDB Database</span>
+			<input class="gf-form-input width-30" type="text"
+				ng-model='ctrl.current.jsonData.mongodb_db'
+				placeholder="test" required>
+			</input>
+		</div>
+	</div>
+</div>
+
