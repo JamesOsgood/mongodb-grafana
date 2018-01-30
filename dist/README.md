@@ -55,11 +55,11 @@ db.sensor_value.aggregate ( [
 
  * `name` - Name of the series ( will be displayed on the graph)
  * `value` - The float value of the point
- * `ts` - The epoch time of the data point
+ * `ts` - The time of the point as a BSON date
 
  These documents are then converted into the [Grafana API](http://docs.grafana.org/plugins/developing/datasources/)
 
-`$from` and `$to` are expanded by the plugin as ISODates based on the range settings on the UI.
+`$from` and `$to` are expanded by the plugin as BSON dates based on the range settings on the UI.
 
 `$sensor` and `$host` are template variables that are filled in by Grafana based on the drop down. The sample template queries are shown below. They expect documents to be returned with a single `_id` field.
 
