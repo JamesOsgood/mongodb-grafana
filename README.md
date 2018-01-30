@@ -65,6 +65,15 @@ db.sensor_value.aggregate ( [
 
  
 <img src="src/img/sample_template.png" alt="Sample Templates" style="width: 800px;"/>
+
+## Running the proxy as a service on a Mac
+
+* Install [forever-mac](https://www.npmjs.com/package/forever-mac)
+* Copy server/mongodb-grafana-proxy.plist to ~/Library/LaunchAgents
+* run `launchctl load mongodb-grafana-proxy` from ~/Library/LaunchAgents
+
+This launch ctrl plist runs the node script via forever. To check it's running, use `forever list`. Logs go into /usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server
+
  
 
 
