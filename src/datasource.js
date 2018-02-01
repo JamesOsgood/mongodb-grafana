@@ -101,7 +101,7 @@ export class GenericDatasource {
   }
 
   buildQueryParameters(options) {
-    //remove placeholder targets
+    //remove place holder targets
     options.targets = _.filter(options.targets, target => {
       return target.target !== 'select metric';
     });
