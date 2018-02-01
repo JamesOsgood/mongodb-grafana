@@ -4,6 +4,7 @@ var _ = require('lodash');
 var app = express();
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
+var config = require('config');
 
 app.use(bodyParser.json());
 
@@ -112,7 +113,7 @@ app.all('/', function(req, res, next)
   next()
 });
 
-// Called by templating functions and to look up variables
+// Called by template functions and to look up variables
 app.all('/search', function(req, res, next)
 {
   setCORSHeaders(res);
@@ -151,9 +152,13 @@ app.use(function(error, req, res, next)
   res.status(500).json({ message: error.message });
 });
 
-app.listen(3333);
+// Get config from server/default.json
+var serverConfig = config.get('server');
+const verbose = serverConfig.verbose
 
-console.log("Server is listening to port 3333");
+app.listen(serverConfig.port);
+
+console.log("Server is listening on port " + serverConfig.port);
 
 // Run an aggregate query. Must return documents of the form
 // { value : 0.34334, ts : <epoch time in seconds> }
@@ -207,7 +212,7 @@ function runAggregateQuery(url, dbName, queryArgs, res, next )
     })
 }
 
-// Runs a query to support templating. Must returns documents of the form
+// Runs a query to support templates. Must returns documents of the form
 // { _id : <id> }
 function doTemplateQuery(queryArgs, db, res, next)
 {

@@ -44,10 +44,11 @@
     "babel-plugin-transform-es2015-for-of": "^6.6.0",
     "babel-plugin-transform-es2015-modules-systemjs": "^6.24.1",
     "babel-preset-es2015": "^6.24.1",
+    "body-parser": "^1.15.1",
+    "config": "^1.29.2",
+    "express": "^4.13.4",
     "lodash": "^4.17.4",
     "mocha": "^3.2.0",
-    "body-parser": "^1.15.1",
-    "express": "^4.13.4",
     "mongodb": "^3.0.1"
   },
   "homepage": "https://github.com/JamesOsgood/mongodb-grafana#readme"

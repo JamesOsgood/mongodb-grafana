@@ -1,0 +1,8 @@
+{
+    "server": 
+    {
+      "port": 3333,
+      "verbose": false
+    }
+}
+  
