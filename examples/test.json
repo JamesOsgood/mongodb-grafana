@@ -1,6 +1,0 @@
-[ {  "$match" :  {  "sensor_type" : "$sensor", "host_name" : "$host"  } , "ts" : { "$gte" : "$from", "$lt" : "$to" }},
-    {  "$bucket" :  { "groupBy" : "$ts",  
-                               "boundaries" : "$dateBuckets", 
-                                "output" :  {  "bucketStart" : { "$min" : "$ts" },  "maxValue" : { "$max" : "$sensor_value" },  },  "default" : "other"   }   },  
-    {  "$sort" : { "bucketStart" : 1 }  },
-    {  "$project" :  {  "name" : "value",  "value" : "$maxValue",  "ts" : "$bucketStart",  "_id" : 0  }  }  ] 

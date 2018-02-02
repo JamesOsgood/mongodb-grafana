@@ -28,11 +28,13 @@ Create a new data source of type MongoDB as shown below. The MongoDB details are
 * **MongoDB URL** - `mongodb://rpiread:rpiread@rpi-sensorreadings-shard-00-00-fgscn.mongodb.net:27017,rpi-sensorreadings-shard-00-01-fgscn.mongodb.net:27017,rpi-sensorreadings-shard-00-02-fgscn.mongodb.net:27017/test?ssl=true&replicaSet=RPI-SensorReadings-shard-0&authSource=admin`
 * **MongoDB Database** - `rpi`
 
-
-
 <img src="src/img/sample_datasource.png" alt="Sample Data Source" style="width: 500px;"/>
 
-Save the data source, then import the dashboard in `examples\RPI MongoDB - Atlas.json`
+Then save the data source
+
+#### Example 1 - Simple aggregate to rename fields
+
+Import the dashboard in `examples\RPI MongoDB - Atlas.json`
 
 This should show a graph of light sensor values from a Raspberry PI with an [EnviroPHAT](https://thepihut.com/products/enviro-phat) board feeding readings every minute into a MongoDB Atlas database.
 
@@ -63,8 +65,24 @@ db.sensor_value.aggregate ( [
 
 `$sensor` and `$host` are template variables that are filled in by Grafana based on the drop down. The sample template queries are shown below. They expect documents to be returned with a single `_id` field.
 
- 
+
 <img src="src/img/sample_template.png" alt="Sample Templates" style="width: 800px;"/>
+
+#### Example 2 - Using $bucketAuto to push data point aggregation to the server
+
+Grafana tells the backend server the date range along with the size of the buckets that should be used to calculate points. Therefore it's possible to use the MongoDB aggregation operator [$bucketAuto](https://docs.mongodb.com/manual/reference/operator/aggregation/bucketAuto/) to automatically bucket the data points into display points. To support this the backend provides the `$dateBucketCount` macro so that queries such as the one below can be written
+
+```javascript
+db.sensor_value.aggregate( [ 
+{  "$match" :  {  "sensor_type" : "$sensor", "host_name" : "$host" , "ts" : { "$gte" : "$from", "$lt" : "$to" }}},
+{  "$bucketAuto" :  { "groupBy" : "$ts",  
+                           "buckets" : "$dateBucketCount", 
+                            "output" :  {  "maxValue" : { "$max" : "$sensor_value" }  }   }   },  
+{  "$project" :  {  "name" : "value",  "value" : "$maxValue",  "ts" : "$_id.min",  "_id" : 0  }  }  ]  )
+```    
+Note that ```_id``` field of the bucketAuto output contains the start and end of the bucket so we can use that as the ```ts``` value
+
+The dashboard in `examples\RPI MongoDB Bucket - Atlas.json` shows this.
 
 ## Running the proxy as a service on a Mac
 
