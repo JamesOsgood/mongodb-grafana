@@ -4,7 +4,7 @@
       "port": 3333,
       "logRequests": false,
       "logQueries": false,
-      "logTimings": true
+      "logTimings": false
     }
 }
   

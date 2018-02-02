@@ -39,7 +39,8 @@ app.all('/query', function(req, res, next)
     // Parse query string in target
     substitutions = { "$from" : new Date(req.body.range.from),
                       "$to" : new Date(req.body.range.to),
-                      "$dateBuckets" : getBoundaries(req.body.range.from, req.body.range.to, req.body.intervalMs) }
+                      "$dateBucketCount" : getBucketCount(req.body.range.from, req.body.range.to, req.body.intervalMs)
+                     }
     tg = req.body.targets[0].target
     queryArgs = parseQuery(tg, substitutions)
     if (queryArgs.err != null)
@@ -182,7 +183,6 @@ function runAggregateQuery(body, queryArgs, res, next )
   
       // Get the documents collection
       const collection = db.collection(queryArgs.collection);
-      console.log("jhel")
       logQuery(queryArgs.pipeline)
       var stopwatch = new Stopwatch(true)
 
@@ -281,13 +281,6 @@ function logQuery(query, type)
   if (serverConfig.logQueries)
   {
     console.log(JSON.stringify(query,null,2))
-
-    var fs = require('fs');
-    fs.writeFile("query.fs", JSON.stringify(query,null,2), function(err) {
-        if(err) {
-            return console.log(err);
-        }
-    }); 
   }
 }
 
@@ -314,18 +307,17 @@ function intervalCount(range, intervalString, intervalMs)
   return output
 }
 
-function getBoundaries(from, to, intervalMs)
+function getBucketCount(from, to, intervalMs)
 {
   var boundaries = []
   var current = new Date(from).getTime()
   var toMs = new Date(to).getTime()
+  var count = 0
   while ( current < toMs )
   {
-    boundaries.push(new Date(current))
     current += intervalMs
+    count++
   }
 
-  // Add a last one
-  boundaries.push(new Date(current))
-  return boundaries
+  return count
 }
