@@ -23,6 +23,8 @@
             <string>/usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server/mongodb-proxy.log</string>
             <string>-e</string>
             <string>/usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server/mongodb-proxy-err.log</string>
+            <string>--workingDir</string>
+            <string>/usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server</string>
             <string>/usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server/mongodb-proxy.js</string>
         </array>
  
