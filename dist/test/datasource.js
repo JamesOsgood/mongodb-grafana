@@ -129,7 +129,7 @@ var GenericDatasource = exports.GenericDatasource = function () {
     value: function buildQueryParameters(options) {
       var _this = this;
 
-      //remove placeholder targets
+      //remove place holder targets
       options.targets = _lodash2.default.filter(options.targets, function (target) {
         return target.target !== 'select metric';
       });

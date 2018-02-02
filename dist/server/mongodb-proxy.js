@@ -4,8 +4,70 @@ var _ = require('lodash');
 var app = express();
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
+var config = require('config');
+var Stopwatch = require("statman-stopwatch");
+var moment = require('moment')
 
 app.use(bodyParser.json());
+
+// Called by test
+app.all('/', function(req, res, next) 
+{
+  logRequest(req.body, "/")
+  setCORSHeaders(res);
+  res.send('Test OK');
+  next()
+});
+
+// Called by template functions and to look up variables
+app.all('/search', function(req, res, next)
+{
+  logRequest(req.body, "/search")
+  setCORSHeaders(res);
+
+  // Parse query string in target
+  queryArgs = parseQuery(req.body.target, {})
+  doTemplateQuery(queryArgs, req.body.db, res, next);
+});
+
+// Called to get graph points
+app.all('/query', function(req, res, next)
+{
+    logRequest(req.body, "/query")
+    setCORSHeaders(res);
+
+    // Parse query string in target
+    substitutions = { "$from" : new Date(req.body.range.from),
+                      "$to" : new Date(req.body.range.to),
+                      "$dateBucketCount" : getBucketCount(req.body.range.from, req.body.range.to, req.body.intervalMs)
+                     }
+    tg = req.body.targets[0].target
+    queryArgs = parseQuery(tg, substitutions)
+    if (queryArgs.err != null)
+    {
+      next(queryArgs.err)
+    }
+    else
+    {
+      // Run the query
+      runAggregateQuery(req.body, queryArgs, res, next)
+    }
+  }
+);
+
+app.use(function(error, req, res, next) 
+{
+  // Any request to this server will get here, and will send an HTTP
+  // response with the error message
+  res.status(500).json({ message: error.message });
+});
+
+// Get config from server/default.json
+var serverConfig = config.get('server');
+
+app.listen(serverConfig.port);
+
+console.log("Server is listening on port " + serverConfig.port);
 
 function setCORSHeaders(res) 
 {
@@ -104,63 +166,12 @@ function parseQuery(query, substitutions)
   return doc
 }
 
-// Called by test
-app.all('/', function(req, res, next) 
-{
-  setCORSHeaders(res);
-  res.send('Test OK');
-  next()
-});
-
-// Called by templating functions and to look up variables
-app.all('/search', function(req, res, next)
-{
-  setCORSHeaders(res);
-
-  // Parse query string in target
-  queryArgs = parseQuery(req.body.target, {})
-  doTemplateQuery(queryArgs, req.body.db, res, next);
-});
-
-// Called to get graph points
-app.all('/query', function(req, res, next)
-{
-    setCORSHeaders(res);
-
-    // Parse query string in target
-    substitutions = { "$from" : new Date(req.body.range.from),
-                      "$to" : new Date(req.body.range.to) }
-    tg = req.body.targets[0].target
-    queryArgs = parseQuery(tg, substitutions)
-    if (queryArgs.err != null)
-    {
-      next(queryArgs.err)
-    }
-    else
-    {
-      // Run the query
-      runAggregateQuery(req.body.db.url, req.body.db.db, queryArgs, res, next)
-    }
-  }
-);
-
-app.use(function(error, req, res, next) 
-{
-  // Any request to this server will get here, and will send an HTTP
-  // response with the error message
-  res.status(500).json({ message: error.message });
-});
-
-app.listen(3333);
-
-console.log("Server is listening to port 3333");
-
 // Run an aggregate query. Must return documents of the form
 // { value : 0.34334, ts : <epoch time in seconds> }
 
-function runAggregateQuery(url, dbName, queryArgs, res, next )
+function runAggregateQuery(body, queryArgs, res, next )
 {
-  MongoClient.connect(url, function(err, client) 
+  MongoClient.connect(body.db.url, function(err, client) 
   {
     if ( err != null )
     {
@@ -168,10 +179,13 @@ function runAggregateQuery(url, dbName, queryArgs, res, next )
     }
     else
     {
-      const db = client.db(dbName);
+      const db = client.db(body.db.db);
   
       // Get the documents collection
       const collection = db.collection(queryArgs.collection);
+      logQuery(queryArgs.pipeline)
+      var stopwatch = new Stopwatch(true)
+
       collection.aggregate(queryArgs.pipeline).toArray(function(err, docs) 
         {
           if ( err != null )
@@ -192,8 +206,10 @@ function runAggregateQuery(url, dbName, queryArgs, res, next )
               }
       
               client.close();
+              var elapsedTimeMs = stopwatch.stop()
               output = []
               output.push({ 'target' : tg, 'datapoints' : datapoints })
+              logTiming(body, elapsedTimeMs, datapoints)
               res.json(output);
               next()
             }
@@ -207,7 +223,7 @@ function runAggregateQuery(url, dbName, queryArgs, res, next )
     })
 }
 
-// Runs a query to support templating. Must returns documents of the form
+// Runs a query to support templates. Must returns documents of the form
 // { _id : <id> }
 function doTemplateQuery(queryArgs, db, res, next)
 {
@@ -250,4 +266,58 @@ function doTemplateQuery(queryArgs, db, res, next)
   {
     next(queryArgs.err)
   }
+}
+
+function logRequest(body, type)
+{
+  if (serverConfig.logRequests)
+  {
+    console.log("REQUEST: " + type + ":\n" + JSON.stringify(body,null,2))
+  }
+}
+
+function logQuery(query, type)
+{
+  if (serverConfig.logQueries)
+  {
+    console.log(JSON.stringify(query,null,2))
+  }
+}
+
+function logTiming(body, elapsedTimeMs, datapoints)
+{
+  if (serverConfig.logTimings)
+  {
+    var range = new Date(body.range.to) - new Date(body.range.from)
+    var diff = moment.duration(range)
+    
+    console.log("Request: " + intervalCount(diff, body.interval, body.intervalMs) + " - Returned " + datapoints.length + " data points in " + elapsedTimeMs.toFixed(2) + "ms")
+  }
+}
+
+// Take a range as a moment.duration and a grafana interval like 30s, 1m etc
+// And return the number of intervals that represents
+function intervalCount(range, intervalString, intervalMs) 
+{
+  // Convert everything to seconds
+  var rangeSeconds = range.asSeconds()
+  var intervalsInRange = rangeSeconds / (intervalMs / 1000)
+
+  var output = intervalsInRange.toFixed(0) + ' ' + intervalString + ' intervals'
+  return output
+}
+
+function getBucketCount(from, to, intervalMs)
+{
+  var boundaries = []
+  var current = new Date(from).getTime()
+  var toMs = new Date(to).getTime()
+  var count = 0
+  while ( current < toMs )
+  {
+    current += intervalMs
+    count++
+  }
+
+  return count
 }

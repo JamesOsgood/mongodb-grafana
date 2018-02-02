@@ -148,7 +148,7 @@ System.register(['lodash'], function (_export, _context) {
           value: function buildQueryParameters(options) {
             var _this = this;
 
-            //remove placeholder targets
+            //remove place holder targets
             options.targets = _.filter(options.targets, function (target) {
               return target.target !== 'select metric';
             });
