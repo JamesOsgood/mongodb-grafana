@@ -3,7 +3,8 @@
     {
       "port": 3333,
       "logRequests": false,
-      "logTimings": false
+      "logQueries": false,
+      "logTimings": true
     }
 }
   

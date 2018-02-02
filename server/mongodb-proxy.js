@@ -38,7 +38,8 @@ app.all('/query', function(req, res, next)
 
     // Parse query string in target
     substitutions = { "$from" : new Date(req.body.range.from),
-                      "$to" : new Date(req.body.range.to) }
+                      "$to" : new Date(req.body.range.to),
+                      "$dateBuckets" : getBoundaries(req.body.range.from, req.body.range.to, req.body.intervalMs) }
     tg = req.body.targets[0].target
     queryArgs = parseQuery(tg, substitutions)
     if (queryArgs.err != null)
@@ -62,8 +63,6 @@ app.use(function(error, req, res, next)
 
 // Get config from server/default.json
 var serverConfig = config.get('server');
-const logRequests = serverConfig.logRequests
-const logTimings = serverConfig.logTimings
 
 app.listen(serverConfig.port);
 
@@ -183,7 +182,10 @@ function runAggregateQuery(body, queryArgs, res, next )
   
       // Get the documents collection
       const collection = db.collection(queryArgs.collection);
+      console.log("jhel")
+      logQuery(queryArgs.pipeline)
       var stopwatch = new Stopwatch(true)
+
       collection.aggregate(queryArgs.pipeline).toArray(function(err, docs) 
         {
           if ( err != null )
@@ -268,15 +270,30 @@ function doTemplateQuery(queryArgs, db, res, next)
 
 function logRequest(body, type)
 {
-  if (logRequests)
+  if (serverConfig.logRequests)
   {
     console.log("REQUEST: " + type + ":\n" + JSON.stringify(body,null,2))
   }
 }
 
+function logQuery(query, type)
+{
+  if (serverConfig.logQueries)
+  {
+    console.log(JSON.stringify(query,null,2))
+
+    var fs = require('fs');
+    fs.writeFile("query.fs", JSON.stringify(query,null,2), function(err) {
+        if(err) {
+            return console.log(err);
+        }
+    }); 
+  }
+}
+
 function logTiming(body, elapsedTimeMs, datapoints)
 {
-  if (logTimings)
+  if (serverConfig.logTimings)
   {
     var range = new Date(body.range.to) - new Date(body.range.from)
     var diff = moment.duration(range)
@@ -295,4 +312,20 @@ function intervalCount(range, intervalString, intervalMs)
 
   var output = intervalsInRange.toFixed(0) + ' ' + intervalString + ' intervals'
   return output
+}
+
+function getBoundaries(from, to, intervalMs)
+{
+  var boundaries = []
+  var current = new Date(from).getTime()
+  var toMs = new Date(to).getTime()
+  while ( current < toMs )
+  {
+    boundaries.push(new Date(current))
+    current += intervalMs
+  }
+
+  // Add a last one
+  boundaries.push(new Date(current))
+  return boundaries
 }
