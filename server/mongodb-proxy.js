@@ -30,6 +30,67 @@ app.all('/search', function(req, res, next)
   doTemplateQuery(queryArgs, req.body.db, res, next);
 });
 
+// State for queries in flight. As results come it, acts as a semaphore and sends the results back
+var requestIdCounter = 0
+// Map of request id -> array of results. Results is
+// { query, err, output }
+var requestsPending = {}
+
+// Called when a query finishes with an error
+function queryError(requestId, err, next)
+{
+  // We only 1 return error per query so it may have been removed from the list
+  if ( requestId in requestsPending )
+  {
+    // Remove request
+    delete requestsPending[requestId]
+    // Send back error
+    next(err)
+  }
+}
+
+// Called when query finished
+function queryFinished(requestId, queryId, results, res, next)
+{
+  // We only 1 return error per query so it may have been removed from the list
+  if ( requestId in requestsPending )
+  {
+    var queryStatus = requestsPending[requestId]
+    // Mark this as finished
+    queryStatus[queryId].pending = false
+    queryStatus[queryId].results = results
+
+    // See if we're all done
+    var done = true
+    for ( var i = 0; i < queryStatus.length; i++)
+    {
+      if (queryStatus[i].pending == true )
+      {
+        done = false
+        break
+      }
+    }
+  
+    // If query done, send back results
+    if (done)
+    {
+      // Concatenate results
+      output = []    
+      for ( var i = 0; i < queryStatus.length; i++)
+      {
+        if ( queryStatus[i].results.datapoints.length > 0)
+        {
+          output.push(queryStatus[i].results)
+        }
+      }
+      res.json(output);
+      next()
+      // Remove request
+      delete requestsPending[requestId]
+    }
+  }
+}
+
 // Called to get graph points
 app.all('/query', function(req, res, next)
 {
@@ -41,26 +102,41 @@ app.all('/query', function(req, res, next)
                       "$to" : new Date(req.body.range.to),
                       "$dateBucketCount" : getBucketCount(req.body.range.from, req.body.range.to, req.body.intervalMs)
                      }
-    tg = req.body.targets[0].target
-    queryArgs = parseQuery(tg, substitutions)
-    if (queryArgs.err != null)
+
+    // Generate an id to track requests
+    const requestId = ++requestIdCounter                 
+    // Add state for the queries in this request
+    var queryStates = []
+    requestsPending[requestId] = queryStates
+    var error = false
+
+    for ( var queryId = 0; queryId < req.body.targets.length && !error; queryId++)
     {
-      next(queryArgs.err)
-    }
-    else
-    {
-      // Run the query
-      runAggregateQuery(req.body, queryArgs, res, next)
+      tg = req.body.targets[queryId].target
+      queryArgs = parseQuery(tg, substitutions)
+      if (queryArgs.err != null)
+      {
+        queryError(requestId, queryArgs.err, next)
+        error = true
+      }
+      else
+      {
+        // Add to the state
+        queryStates.push( { pending : true } )
+
+        // Run the query
+        runAggregateQuery( requestId, queryId, req.body, queryArgs, res, next)
+      }
     }
   }
 );
 
-app.use(function(error, req, res, next) 
-{
-  // Any request to this server will get here, and will send an HTTP
-  // response with the error message
-  res.status(500).json({ message: error.message });
-});
+// app.use(function(error, req, res, next) 
+// {
+//   // Any request to this server will get here, and will send an HTTP
+//   // response with the error message
+//   res.status(500).json({ message: error.message });
+// });
 
 // Get config from server/default.json
 var serverConfig = config.get('server');
@@ -169,13 +245,13 @@ function parseQuery(query, substitutions)
 // Run an aggregate query. Must return documents of the form
 // { value : 0.34334, ts : <epoch time in seconds> }
 
-function runAggregateQuery(body, queryArgs, res, next )
+function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
 {
   MongoClient.connect(body.db.url, function(err, client) 
   {
     if ( err != null )
     {
-      next(err)
+      queryError(requestId, err, next)
     }
     else
     {
@@ -191,7 +267,7 @@ function runAggregateQuery(body, queryArgs, res, next )
           if ( err != null )
           {
             client.close();
-            next(err)
+            queryError(requestState.requestId, err, next)
           }
           else
           {
@@ -207,15 +283,14 @@ function runAggregateQuery(body, queryArgs, res, next )
       
               client.close();
               var elapsedTimeMs = stopwatch.stop()
-              output = []
-              output.push({ 'target' : tg, 'datapoints' : datapoints })
+              var results = { 'target' : tg, 'datapoints' : datapoints }
               logTiming(body, elapsedTimeMs, datapoints)
-              res.json(output);
-              next()
+              // Mark query as finished - will send back results when all queries finished
+              queryFinished(requestId, queryId, results, res, next)
             }
             catch(err)
             {
-              next(err)
+              queryError(requestId, err, next)
             }
           }
         })
