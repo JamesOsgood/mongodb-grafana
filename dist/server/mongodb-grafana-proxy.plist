@@ -14,9 +14,9 @@
     <key>WorkingDirectory</key>
     <string>/usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server</string>
 
-       <key>ProgramArguments</key>
+    <key>ProgramArguments</key>
         <array>
-            <string>/usr/local/bin/forever</string>
+            <string>/usr/local/lib/npm-packages/bin/forever</string>
             <string>-l</string>
             <string>/usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server/mongodb-proxy-forever.log</string>
             <string>-o</string>
@@ -34,5 +34,9 @@
     <key>KeepAlive</key>
     <false/>
 
+    <key>StandardErrorPath</key>
+    <string>/tmp/mycommand.err</string>
+    <key>StandardOutPath</key>
+    <string>/tmp/mycommand.out</string>
 </dict>
 </plist>
