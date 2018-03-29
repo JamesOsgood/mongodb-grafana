@@ -267,7 +267,7 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
           if ( err != null )
           {
             client.close();
-            queryError(requestState.requestId, err, next)
+            queryError(requestId, err, next)
           }
           else
           {

@@ -16,7 +16,7 @@
 
        <key>ProgramArguments</key>
         <array>
-            <string>/usr/local/bin/forever</string>
+            <string>/usr/local/lib/npm-packages/bin/forever</string>
             <string>-l</string>
             <string>/usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server/mongodb-proxy-forever.log</string>
             <string>-o</string>

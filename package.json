@@ -7,7 +7,7 @@
   "scripts": {
     "build": "./node_modules/grunt-cli/bin/grunt",
     "test": "./node_modules/grunt-cli/bin/grunt mochaTest",
-    "server": "node ./dist/server/mongodb-proxy.js"
+    "server": "cd dist/server && node mongodb-proxy.js"
   },
   "repository": {
     "type": "git",
