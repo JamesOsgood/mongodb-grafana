@@ -25,9 +25,21 @@ app.all('/search', function(req, res, next)
   logRequest(req.body, "/search")
   setCORSHeaders(res);
 
+  // Generate an id to track requests
+  const requestId = ++requestIdCounter                 
+  // Add state for the queries in this request
+  var queryStates = []
+  requestsPending[requestId] = queryStates
   // Parse query string in target
   queryArgs = parseQuery(req.body.target, {})
-  doTemplateQuery(queryArgs, req.body.db, res, next);
+  if (queryArgs.err != null)
+  {
+    queryError(requestId, queryArgs.err, next)
+  }
+  else
+  {
+    doTemplateQuery(requestId, queryArgs, req.body.db, res, next);
+  }
 });
 
 // State for queries in flight. As results come it, acts as a semaphore and sends the results back
@@ -131,12 +143,12 @@ app.all('/query', function(req, res, next)
   }
 );
 
-// app.use(function(error, req, res, next) 
-// {
-//   // Any request to this server will get here, and will send an HTTP
-//   // response with the error message
-//   res.status(500).json({ message: error.message });
-// });
+app.use(function(error, req, res, next) 
+{
+  // Any request to this server will get here, and will send an HTTP
+  // response with the error message
+  res.status(500).json({ message: error.message });
+});
 
 // Get config from server/default.json
 var serverConfig = config.get('server');
@@ -300,7 +312,7 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
 
 // Runs a query to support templates. Must returns documents of the form
 // { _id : <id> }
-function doTemplateQuery(queryArgs, db, res, next)
+function doTemplateQuery(requestId, queryArgs, db, res, next)
 {
  if ( queryArgs.err == null)
   {
@@ -312,10 +324,15 @@ function doTemplateQuery(queryArgs, db, res, next)
     {
       if ( err != null )
       {
-        next(err)
+        queryError(requestId, err, next )
       }
       else
       {
+        // Remove request from list
+        if ( requestId in requestsPending )
+        {
+          delete requestsPending[requestId]
+        }
         const db = client.db(dbName);
         // Get the documents collection
         const collection = db.collection(queryArgs.collection);
