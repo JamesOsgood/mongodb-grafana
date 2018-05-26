@@ -1,0 +1,19 @@
+apiVersion: 1
+
+datasources:
+- name: DS_RPI_LOCAL
+  type: grafana-mongodb-datasource
+  access: proxy
+  url: http://gf-mdb-proxy:3333
+  jsonData:
+    mongodb_db: rpi
+    mongodb_url: mongodb://rpiread:rpiread@rpi-sensorreadings-shard-00-00-fgscn.mongodb.net:27017,rpi-sensorreadings-shard-00-01-fgscn.mongodb.net:27017,rpi-sensorreadings-shard-00-02-fgscn.mongodb.net:27017/test?ssl=true&replicaSet=RPI-SensorReadings-shard-0&authSource=admin
+  editable: true
+- name: DS_RPI_ATLAS
+  type: grafana-mongodb-datasource
+  access: proxy
+  url: http://gf-mdb-proxy:3333
+  jsonData:
+    mongodb_db: rpi
+    mongodb_url: mongodb://rpiread:rpiread@rpi-sensorreadings-shard-00-00-fgscn.mongodb.net:27017,rpi-sensorreadings-shard-00-01-fgscn.mongodb.net:27017,rpi-sensorreadings-shard-00-02-fgscn.mongodb.net:27017/test?ssl=true&replicaSet=RPI-SensorReadings-shard-0&authSource=admin
+  editable: true
