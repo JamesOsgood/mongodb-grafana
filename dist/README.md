@@ -86,6 +86,8 @@ The dashboard in `examples\RPI MongoDB Bucket - Atlas.json` shows this.
 
 #### Example 3 - Using a Tabel Panel
 
+<img src="src/img/table_panel.png" alt="Table Panel" style="width: 800px;"/>
+
 Table panels are now supported with queries of the form
 
 ```javascript

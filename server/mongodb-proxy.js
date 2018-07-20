@@ -95,7 +95,6 @@ function queryFinished(requestId, queryId, results, res, next)
         for (var i = i; i < keys.length; i++)
         {
           var tg = keys[i]
-          console.log(tg)
           output.push(queryResults[tg])
         }
       }
