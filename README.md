@@ -25,7 +25,7 @@ Allows MongoDB to be used as a data source for Grafana by providing a proxy to c
 
 Create a new data source of type MongoDB as shown below. The MongoDB details are :
 
-* **MongoDB URL** - `mongodb://rpiread:rpiread@rpi-sensorreadings-shard-00-00-fgscn.mongodb.net:27017,rpi-sensorreadings-shard-00-01-fgscn.mongodb.net:27017,rpi-sensorreadings-shard-00-02-fgscn.mongodb.net:27017/test?ssl=true&replicaSet=RPI-SensorReadings-shard-0&authSource=admin`
+* **MongoDB URL** - `mongodb://rpiread:rpiread@rpi-sensor-data-shard-00-00-ifxxs.mongodb.net:27017,rpi-sensor-data-shard-00-01-ifxxs.mongodb.net:27017,rpi-sensor-data-shard-00-02-ifxxs.mongodb.net:27017/test?ssl=true&replicaSet=rpi-sensor-data-shard-0&authSource=admin`
 * **MongoDB Database** - `rpi`
 
 <img src="src/img/sample_datasource.png" alt="Sample Data Source" style="width: 500px;"/>
@@ -83,6 +83,21 @@ db.sensor_value.aggregate( [
 Note that ```_id``` field of the bucketAuto output contains the start and end of the bucket so we can use that as the ```ts``` value
 
 The dashboard in `examples\RPI MongoDB Bucket - Atlas.json` shows this.
+
+#### Example 3 - Using a Tabel Panel
+
+Table panels are now supported with queries of the form
+
+```javascript
+db.sensor_value.aggregate(
+[
+    {  "$match" :  {  "ts" : { "$gte" : "$from", "$lt" : "$to"  }}},
+    {  "$group":    {  "_id":  { "sensor_name" : "$sensor_name",  "sensor_type" : "$sensor_type"  }, "cnt" : { "$sum" : 1 },  "ts" : { "$max" : "$ts" }  } }, 
+    { "$project": {  "name" : { "$concat" : ["$_id.sensor_name",":","$_id.sensor_type" ]},  "value" : "$cnt",  "ts" : 1, "_id" : 0} } 
+])
+```    
+
+The dashboard in `examples\Sensor Values Count - Atlas.json` shows this.
 
 ## Running the proxy as a service on a Mac
 

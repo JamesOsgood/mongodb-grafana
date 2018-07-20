@@ -90,9 +90,13 @@ function queryFinished(requestId, queryId, results, res, next)
       output = []    
       for ( var i = 0; i < queryStatus.length; i++)
       {
-        if ( queryStatus[i].results.datapoints.length > 0)
+        var queryResults = queryStatus[i].results
+        var keys = Object.keys(queryResults)
+        for (var i = i; i < keys.length; i++)
         {
-          output.push(queryStatus[i].results)
+          var tg = keys[i]
+          console.log(tg)
+          output.push(queryResults[tg])
         }
       }
       res.json(output);
@@ -285,18 +289,28 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
           {
             try
             {
-              datapoints = []
+              var results = {}
               for ( var i = 0; i < docs.length; i++)
               {
                 var doc = docs[i]
-                tg = doc.name
-                datapoints.push([doc['value'], doc['ts'].getTime()])
+                var tg = doc.name
+                var dp = null
+                if (tg in results)
+                {
+                  dp = results[tg]
+                }
+                else
+                {
+                  dp = { 'target' : tg, 'datapoints' : [] }
+                  results[tg] = dp
+                }
+                
+                results[tg].datapoints.push([doc['value'], doc['ts'].getTime()])
               }
       
               client.close();
               var elapsedTimeMs = stopwatch.stop()
-              var results = { 'target' : tg, 'datapoints' : datapoints }
-              logTiming(body, elapsedTimeMs, datapoints)
+              logTiming(body, elapsedTimeMs)
               // Mark query as finished - will send back results when all queries finished
               queryFinished(requestId, queryId, results, res, next)
             }
@@ -376,14 +390,14 @@ function logQuery(query, type)
   }
 }
 
-function logTiming(body, elapsedTimeMs, datapoints)
+function logTiming(body, elapsedTimeMs)
 {
   if (serverConfig.logTimings)
   {
     var range = new Date(body.range.to) - new Date(body.range.from)
     var diff = moment.duration(range)
     
-    console.log("Request: " + intervalCount(diff, body.interval, body.intervalMs) + " - Returned " + datapoints.length + " data points in " + elapsedTimeMs.toFixed(2) + "ms")
+    console.log("Request: " + intervalCount(diff, body.interval, body.intervalMs) + " - Returned in " + elapsedTimeMs.toFixed(2) + "ms")
   }
 }
 
