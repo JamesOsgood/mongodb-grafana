@@ -92,9 +92,9 @@ function queryFinished(requestId, queryId, results, res, next)
       {
         var queryResults = queryStatus[i].results
         var keys = Object.keys(queryResults)
-        for (var i = i; i < keys.length; i++)
+        for (var k = 0; k < keys.length; k++)
         {
-          var tg = keys[i]
+          var tg = keys[k]
           output.push(queryResults[tg])
         }
       }
