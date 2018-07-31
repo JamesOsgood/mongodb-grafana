@@ -183,13 +183,15 @@ function forIn(obj, processFunc)
 
 function parseQuery(query, substitutions)
 {
+  doc = {}
+  queryErrors = []
+
   query = query.trim() 
   if (query.substring(0,3) != "db.")
   {
+    queryErrors.push("Query must start with db.")
     return null
   }
-  doc = {}
-  queryErrors = []
 
   // Query is of the form db.<collection>.aggregate or db.<collection>.find
   // Split on the first ( after db.
@@ -200,7 +202,7 @@ function parseQuery(query, substitutions)
   }
   else
   {
-    // Split the first bit - it's the collection name and operation ( find or aggregate )
+    // Split the first bit - it's the collection name and operation ( must be aggregate )
     var parts = query.substring(3, openBracketIndex).split('.')
     // Collection names can have .s so last part is operation, rest is the collection name
     if (parts.length >= 2)
@@ -224,8 +226,16 @@ function parseQuery(query, substitutions)
       var args = query.substring(openBracketIndex + 1, closeBracketIndex)
       if ( doc.operation == 'aggregate')
       {
-        // Arg is pipeline
-        doc.pipeline = JSON.parse(args)
+        // Wrap args in array syntax so we can check for optional options arg
+        args = '[' + args + ']'
+        docs = JSON.parse(args)
+        // First Arg is pipeline
+        doc.pipeline = docs[0]
+        // If we have 2 top level args, second is agg options
+        if ( docs.length == 2 )
+        {
+          doc.agg_options = docs[1]
+        }
         // Replace with substitutions
         for ( var i = 0; i < doc.pipeline.length; i++)
         {
@@ -274,10 +284,10 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
   
       // Get the documents collection
       const collection = db.collection(queryArgs.collection);
-      logQuery(queryArgs.pipeline)
+      logQuery(queryArgs.pipeline, queryArgs.agg_options)
       var stopwatch = new Stopwatch(true)
 
-      collection.aggregate(queryArgs.pipeline).toArray(function(err, docs) 
+      collection.aggregate(queryArgs.pipeline, queryArgs.agg_options).toArray(function(err, docs) 
         {
           if ( err != null )
           {
@@ -381,11 +391,17 @@ function logRequest(body, type)
   }
 }
 
-function logQuery(query, type)
+function logQuery(query, options)
 {
   if (serverConfig.logQueries)
   {
+    console.log("Query:")
     console.log(JSON.stringify(query,null,2))
+    if ( options != null )
+    {
+      console.log("Query Options:")
+      console.log(JSON.stringify(options,null,2))
+    }
   }
 }
 
