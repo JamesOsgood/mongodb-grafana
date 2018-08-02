@@ -71,7 +71,7 @@ export class GenericDatasource {
 
   metricFindQuery(query) {
     var interpolated = {
-        target: this.templateSrv.replace(query, null, 'regex')
+        target: this.templateSrv.replace(query, null, '')
         };
     interpolated.db = this.db
 
@@ -108,10 +108,10 @@ export class GenericDatasource {
 
     var targets = _.map(options.targets, target => {
       return {
-        target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
+        target: this.templateSrv.replace(target.target, options.scopedVars, ''),
         refId: target.refId,
         hide: target.hide,
-        type: target.type || 'timeserie'
+        type: target.type || 'timeserie'      
       };
     });
 

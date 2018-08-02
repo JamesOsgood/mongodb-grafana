@@ -113,7 +113,7 @@ System.register(['lodash'], function (_export, _context) {
           key: 'metricFindQuery',
           value: function metricFindQuery(query) {
             var interpolated = {
-              target: this.templateSrv.replace(query, null, 'regex')
+              target: this.templateSrv.replace(query, null, '')
             };
             interpolated.db = this.db;
 
@@ -155,7 +155,7 @@ System.register(['lodash'], function (_export, _context) {
 
             var targets = _.map(options.targets, function (target) {
               return {
-                target: _this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
+                target: _this.templateSrv.replace(target.target, options.scopedVars, ''),
                 refId: target.refId,
                 hide: target.hide,
                 type: target.type || 'timeserie'
