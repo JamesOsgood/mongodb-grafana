@@ -13,8 +13,7 @@
   "info": {
     "description": "MongoDB datasource",
     "author": {
-      "name": "Grafana Labs",
-      "url": "https://grafana.com"
+      "name": "James Osgood"
     },
     "logos": {
       "small": "img/MongoDB_Gray_Logo_FullColor_RGB-01.jpg",
