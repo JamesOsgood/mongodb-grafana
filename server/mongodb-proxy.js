@@ -127,8 +127,9 @@ app.all('/query', function(req, res, next)
 
     for ( var queryId = 0; queryId < req.body.targets.length && !error; queryId++)
     {
-      tg = req.body.targets[queryId].target
-      queryArgs = parseQuery(tg, substitutions)
+      tg = req.body.targets[queryId]
+      queryArgs = parseQuery(tg.target, substitutions)
+      queryArgs.type = tg.type
       if (queryArgs.err != null)
       {
         queryError(requestId, queryArgs.err, next)
@@ -299,22 +300,13 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
             try
             {
               var results = {}
-              for ( var i = 0; i < docs.length; i++)
+              if ( queryArgs.type == 'timeserie' )
               {
-                var doc = docs[i]
-                var tg = doc.name
-                var dp = null
-                if (tg in results)
-                {
-                  dp = results[tg]
-                }
-                else
-                {
-                  dp = { 'target' : tg, 'datapoints' : [] }
-                  results[tg] = dp
-                }
-                
-                results[tg].datapoints.push([doc['value'], doc['ts'].getTime()])
+                results = getTimeseriesResults(docs)
+              }
+              else
+              {
+                results = getTableResults(docs)
               }
       
               client.close();
@@ -331,6 +323,83 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
         })
       }
     })
+}
+
+function getTableResults(docs)
+{
+  var columns = {}
+  
+  // Build superset of columns
+  for ( var i = 0; i < docs.length; i++)
+  {
+    var doc = docs[i]
+    // Go through all properties
+    for (var propName in doc )
+    {
+      // See if we need to add a new column
+      if ( !(propName in columns) )
+      {
+        columns[propName] = 
+        {
+          text : propName,
+          type : "text"
+        }
+      }
+    }
+  }
+  
+  // Build return rows
+  rows = []
+  for ( var i = 0; i < docs.length; i++)
+  {
+    var doc = docs[i]
+    row = []
+    // All cols
+    for ( var colName in columns )
+    {
+      var col = columns[colName]
+      if ( col.text in doc )
+      {
+        row.push(doc[col.text])
+      }
+      else
+      {
+        row.push(null)
+      }
+    }
+    rows.push(row)
+  }
+  
+  var results = {}
+  results["table"] = {
+    columns :  Object.values(columns),
+    rows : rows,
+    type : "table"
+  }
+  return results
+}
+
+function getTimeseriesResults(docs)
+{
+  var results = {}
+  for ( var i = 0; i < docs.length; i++)
+  {
+    var doc = docs[i]
+    var tg = doc.name
+    var dp = null
+    if (tg in results)
+    {
+      dp = results[tg]
+    }
+    else
+    {
+      dp = { 'target' : tg, 'datapoints' : [] }
+      results[tg] = dp
+    }
+    
+    results[tg].datapoints.push([doc['value'], doc['ts'].getTime()])
+  }
+  return results
 }
 
 // Runs a query to support templates. Must returns documents of the form

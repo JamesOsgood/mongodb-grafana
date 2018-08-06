@@ -1,7 +1,7 @@
 {
   "name": "grafana-mongodb",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "",
   "main": "server/mongodb-proxy.js",
   "scripts": {
