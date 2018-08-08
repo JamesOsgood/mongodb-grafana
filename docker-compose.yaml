@@ -1,0 +1,14 @@
+version: '2.2'
+services:
+  graphana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ".:/var/lib/grafana/plugins/grafana-mongodb-datasource"
+      - "./examples/docker-demo/datasources:/etc/grafana/provisioning/datasources"
+      - "./examples/docker-demo/dashboards:/etc/grafana/provisioning/dashboards"
+      - "./examples:/var/lib/grafana/dashboards"
+  gf-mdb-proxy:
+    build: .
+    image: jamesosgood/mongodb-grafana

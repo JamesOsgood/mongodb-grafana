@@ -8,6 +8,19 @@ Allows MongoDB to be used as a data source for Grafana by providing a proxy to c
 * **Grafana** > 3.x.x
 * **MongoDB** > 3.4.x
 
+## Demo in Docker
+
+* Bootstraps [Grafana](https://github.com/grafana/grafana-docker) with mongodb proxy plugin
+* Launches mongodb proxy service
+* Imports preconfigured Dashboards
+
+Grafana will be available on `3000` port
+
+```
+git clone https://github.com/JamesOsgood/mongodb-grafana.git
+docker-compose up
+```
+
 ## Installation
 
 ### Install the Grafana plugin components
@@ -47,7 +60,7 @@ Clicking on the title of the graph allows you to see the aggregation query being
 The query here is
 
 ```javascript
-db.sensor_value.aggregate ( [ 
+db.sensor_value.aggregate ( [
 { "$match" :    {   "sensor_type" : "$sensor",   "host_name" : "$host",   "ts" : { "$gte" : "$from", "$lte" : "$to" } }  },        
  {"$sort" : {"ts" : 1}},            
  {"$project" :   {  "name" : "value",   "value" : "$sensor_value",  "ts" : "$ts",  "_id" : 0} } ])
@@ -73,10 +86,10 @@ db.sensor_value.aggregate ( [
 Grafana tells the backend server the date range along with the size of the buckets that should be used to calculate points. Therefore it's possible to use the MongoDB aggregation operator [$bucketAuto](https://docs.mongodb.com/manual/reference/operator/aggregation/bucketAuto/) to automatically bucket the data points into display points. To support this the backend provides the `$dateBucketCount` macro so that queries such as the one below can be written
 
 ```javascript
-db.sensor_value.aggregate( [ 
+db.sensor_value.aggregate( [
 {  "$match" :  {  "sensor_type" : "$sensor", "host_name" : "$host" , "ts" : { "$gte" : "$from", "$lt" : "$to" }}},
 {  "$bucketAuto" :  { "groupBy" : "$ts",  
-                           "buckets" : "$dateBucketCount", 
+                           "buckets" : "$dateBucketCount",
                             "output" :  {  "maxValue" : { "$max" : "$sensor_value" }  }   }   },  
 {  "$project" :  {  "name" : "value",  "value" : "$maxValue",  "ts" : "$_id.min",  "_id" : 0  }  }  ]  )
 ```    
@@ -108,13 +121,3 @@ The dashboard in `examples\Sensor Values Count - Atlas.json` shows this.
 * run `launchctl load mongodb-grafana-proxy` from ~/Library/LaunchAgents
 
 This launch ctrl plist runs the node script via forever. To check it's running, use `forever list`. Logs go into /usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server
-
- 
-
-
-
-
-
-
-
-
