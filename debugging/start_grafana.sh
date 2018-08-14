@@ -1,0 +1,1 @@
+/usr/local/opt/grafana/bin/grafana-server --config /Users/james/code/github/grafana/plugins/mongodb-grafana/debugging/grafana.ini --homepath /usr/local/opt/grafana/share/grafana

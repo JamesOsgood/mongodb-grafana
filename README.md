@@ -109,7 +109,21 @@ The dashboard in `examples\Sensor Values Count - Atlas.json` shows this.
 
 This launch ctrl plist runs the node script via forever. To check it's running, use `forever list`. Logs go into /usr/local/var/lib/grafana/plugins/mongodb-grafana/dist/server
 
+## Development
+
+To run grafana against a dev version of the plugin on a mac using grafana installed via Homebrew
  
+* Stop the grafana service `brew services stop grafana`
+* Open a command prompt in /debugging
+* Run ./start_grafana.sh
+* Alter code
+* npm run build to build the UI
+* Developer tools -> empty cache and hard reload
+
+Note
+
+* Homebrew grafana versions in /usr/local/Cellar
+
 
 
 

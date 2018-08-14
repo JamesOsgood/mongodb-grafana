@@ -76,10 +76,11 @@ System.register(['lodash'], function (_export, _context) {
           value: function testDatasource() {
             return this.doRequest({
               url: this.url + '/',
-              method: 'GET'
+              data: { db: this.db },
+              method: 'POST'
             }).then(function (response) {
               if (response.status === 200) {
-                return { status: "success", message: "Data source is working", title: "Success" };
+                return { status: response.data.status, message: response.data.message, title: response.data.display_status };
               }
             });
           }

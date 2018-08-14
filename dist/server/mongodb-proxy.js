@@ -15,8 +15,23 @@ app.all('/', function(req, res, next)
 {
   logRequest(req.body, "/")
   setCORSHeaders(res);
-  res.send('Test OK');
-  next()
+
+  MongoClient.connect(req.body.db.url, function(err, client)
+  {
+    if ( err != null )
+    {
+      res.send({ status : "error", 
+                 display_status : "Error", 
+                 message : 'MongoDB Connection Error: ' + err.message });
+    }
+    else
+    {
+      res.send( { status : "success", 
+                  display_status : "Success", 
+                  message : 'MongoDB Connection test OK' });
+    }
+    next()
+  })
 });
 
 // Called by template functions and to look up variables
