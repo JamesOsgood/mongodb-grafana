@@ -63,6 +63,8 @@ db.sensor_value.aggregate ( [
 
 `$from` and `$to` are expanded by the plugin as BSON dates based on the range settings on the UI.
 
+## Template Variables
+
 `$sensor` and `$host` are template variables that are filled in by Grafana based on the drop down. The sample template queries are shown below. They expect documents to be returned with a single `_id` field.
 
 
