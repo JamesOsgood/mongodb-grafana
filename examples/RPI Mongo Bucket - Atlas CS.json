@@ -1,0 +1,336 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_RPI_- ATLAS",
+      "label": "RPI - Atlas",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "grafana-mongodb-datasource",
+      "pluginName": "MongoDB"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "5.1.3"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-mongodb-datasource",
+      "name": "MongoDB",
+      "version": "0.8.1"
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": "5.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1535309747386,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "${DS_RPI_- ATLAS}",
+      "fill": 1,
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "value"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "rawQuery": true,
+          "refId": "B",
+          "target": "db.sensor_value.aggregate( [ \n{  \"$match\" :  {  \"sensor_type\" : \"$var_sensor_type\", \"host_name\" : \"$var_host\" , \"sensor_name\" : \"ep\" , \"sensor_type\" : \"temperature\" , \"ts\" : { \"$gte\" : \"$from\", \"$lt\" : \"$to\" }}},\n{  \"$bucketAuto\" :  { \"groupBy\" : \"$ts\",  \n                           \"buckets\" : \"$dateBucketCount\", \n                            \"output\" :  {  \"maxValue\" : { \"$max\" : \"$sensor_value\" }  }   }   },  \n{  \"$project\" :  {  \"name\" : \"Enviro pHAT\",  \"value\" : \"$maxValue\",  \"ts\" : \"$_id.min\",  \"_id\" : 0  }  }  ]  )",
+          "type": "timeserie"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Sensor Value",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "none",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "${DS_RPI_- ATLAS}",
+      "fill": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "DS18B20",
+          "color": "#eab839"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "groupByAliases": [],
+          "groupByColumns": [],
+          "metricAggs": [
+            {
+              "column": "value",
+              "type": "avg"
+            }
+          ],
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "target": "db.trend_value.aggregate( [ \n{  \"$match\" :  {  \"sensor_type\" : \"$var_sensor_type\", \"host_name\" : \"$var_host\" , \"sensor_name\" : \"ep\" , \"sensor_type\" : \"temperature\" , \"ts\" : { \"$gte\" : \"$from\", \"$lt\" : \"$to\" }}},\n{  \"$bucketAuto\" :  { \"groupBy\" : \"$ts\",  \n                           \"buckets\" : \"$dateBucketCount\", \n                            \"output\" :  {  \"maxValue\" : { \"$max\" : \"$trend_value\" }  }   }   },  \n{  \"$project\" :  {  \"name\" : \"Enviro pHAT\",  \"value\" : \"$maxValue\",  \"ts\" : \"$_id.min\",  \"_id\" : 0  }  }  ]  )",
+          "timeInterval": "auto_gf",
+          "type": "timeserie",
+          "whereClauses": []
+        }
+      ],
+      "thresholds": [
+        {
+          "colorMode": "critical",
+          "fill": true,
+          "line": true,
+          "op": "lt",
+          "value": 0
+        },
+        {
+          "colorMode": "ok",
+          "fill": true,
+          "line": true,
+          "op": "gt",
+          "value": 0
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Trend",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 16,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_RPI_- ATLAS}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "host",
+        "multi": false,
+        "name": "var_host",
+        "options": [],
+        "query": "db.sensor_value.aggregate ( [  { \"$group\" :  { \"_id\" : \"$host_name\"  } } ]  ) ",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_RPI_- ATLAS}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "sensor",
+        "multi": false,
+        "name": "var_sensor_type",
+        "options": [],
+        "query": "db.sensor_value.aggregate ( [ { \"$group\" : { \"_id\" : \"$sensor_type\" } } ] )",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "RPI Mongo Bucket - Atlas CS",
+  "uid": "000000016",
+  "version": 9
+}
