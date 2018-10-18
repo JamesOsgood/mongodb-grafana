@@ -12,7 +12,7 @@ Allows MongoDB to be used as a data source for Grafana by providing a proxy to c
 
 ### Install the Grafana plugin components
 
-* Copy the whole mongodb-grafana dir into the Grafana plugins dir ( /usr/local/var/lib/grafana/plugins )
+* Copy the whole mongodb-grafana dir into the Grafana plugins dir ( /var/lib/grafana/plugins ) * Ubuntu 18.04
 * Restart the Grafana server. If installed via Homebrew, this will be `brew services restart grafana`
 
 ### Install and Start the MongoDB proxy server
