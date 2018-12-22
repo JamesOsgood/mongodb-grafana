@@ -1,3 +1,5 @@
+var parser = require('mongodb-query-parser');
+var escapeStringRegexp = require('escape-string-regexp');
 var express = require('express');
 var bodyParser = require('body-parser');
 var _ = require('lodash');
@@ -128,8 +130,8 @@ app.all('/query', function(req, res, next)
     setCORSHeaders(res);
 
     // Parse query string in target
-    substitutions = { "$from" : new Date(req.body.range.from),
-                      "$to" : new Date(req.body.range.to),
+    substitutions = { "$from" : req.body.range.from,
+                      "$to" : req.body.range.to,
                       "$dateBucketCount" : getBucketCount(req.body.range.from, req.body.range.to, req.body.intervalMs)
                      }
 
@@ -172,7 +174,7 @@ app.use(function(error, req, res, next)
 // Get config from server/default.json
 var serverConfig = config.get('server');
 
-app.listen(serverConfig.port);
+app.listen(serverConfig.port, serverConfig.host);
 
 console.log("Server is listening on port " + serverConfig.port);
 
@@ -232,7 +234,7 @@ function parseQuery(query, substitutions)
     }
   
     // Args is the rest up to the last bracket
-    var closeBracketIndex = query.indexOf(')', openBracketIndex)
+    var closeBracketIndex = query.lastIndexOf(')')
     if (closeBracketIndex == -1)
     {
       queryErrors.push("Can't find last bracket")
@@ -244,7 +246,13 @@ function parseQuery(query, substitutions)
       {
         // Wrap args in array syntax so we can check for optional options arg
         args = '[' + args + ']'
-        docs = JSON.parse(args)
+        //docs = JSON.parse(args)
+        // Replace with substitutions
+        for (var key in substitutions) {
+          var regex = new RegExp(escapeStringRegexp(key), 'g')
+          args = args.replace(regex, substitutions[key])
+        }
+        docs = parser(args)
         // First Arg is pipeline
         doc.pipeline = docs[0]
         // If we have 2 top level args, second is agg options
@@ -253,7 +261,7 @@ function parseQuery(query, substitutions)
           doc.agg_options = docs[1]
         }
         // Replace with substitutions
-        for ( var i = 0; i < doc.pipeline.length; i++)
+        /*for ( var i = 0; i < doc.pipeline.length; i++)
         {
             var stage = doc.pipeline[i]
             forIn(stage, function (obj, key, value)
@@ -266,7 +274,7 @@ function parseQuery(query, substitutions)
                         }
                     }
                 })
-          }
+          }*/
       }
       else
       {
