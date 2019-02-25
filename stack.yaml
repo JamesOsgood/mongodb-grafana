@@ -1,0 +1,36 @@
+version: '3.5'
+
+services:
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - ${DB_PATH}:/data/db
+    networks:
+      - backend
+  mongo-proxy:
+    build:
+      context: .
+      dockerfile: ProxyDockerfile
+    restart: always
+    networks:
+      - backend
+  grafana:
+    build:
+      context: .
+      dockerfile: GrafanaDockerfile
+    restart: always
+    ports:
+      - 3000:3000
+    networks:
+      - backend
+      - frontend
+networks:
+  frontend:
+    name: frontend-network
+  backend:
+    name: backend-network
+    internal: true
