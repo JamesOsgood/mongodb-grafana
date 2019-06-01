@@ -145,6 +145,26 @@ System.register(['lodash'], function (_export, _context) {
             return this.backendSrv.datasourceRequest(options);
           }
         }, {
+          key: 'interpolateVariable',
+          value: function interpolateVariable(value, variable) {
+            if (typeof value === 'string') {
+              if (variable.multi || variable.includeAll) {
+                return '"' + value + '"';
+              } else {
+                return value;
+              }
+            }
+
+            if (typeof value === 'number') {
+              return value;
+            }
+
+            var quotedValues = _.map(value, function(val) {
+              return '"' + val + '"';
+            });
+            return quotedValues.join(',');
+          }
+        }, {
           key: 'buildQueryParameters',
           value: function buildQueryParameters(options) {
             var _this = this;
@@ -156,7 +176,7 @@ System.register(['lodash'], function (_export, _context) {
 
             var targets = _.map(options.targets, function (target) {
               return {
-                target: _this.templateSrv.replace(target.target, options.scopedVars, ''),
+                target: _this.templateSrv.replace(target.target, options.scopedVars, _this.interpolateVariable),
                 refId: target.refId,
                 hide: target.hide,
                 type: target.type || 'timeserie'
