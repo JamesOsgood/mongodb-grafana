@@ -244,7 +244,7 @@ function parseQuery(query, substitutions)
       {
         // Wrap args in array syntax so we can check for optional options arg
         args = '[' + args + ']'
-        docs = JSON.parse(args)
+        docs = eval(args)
         // First Arg is pipeline
         doc.pipeline = docs[0]
         // If we have 2 top level args, second is agg options
