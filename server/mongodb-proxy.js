@@ -6,7 +6,11 @@ const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 var config = require('config');
 var Stopwatch = require("statman-stopwatch");
-var moment = require('moment')
+var moment = require('moment');
+
+// for the query eval
+const ObjectID = require('mongodb').ObjectID;
+const Binary = require('mongodb').Binary;
 
 app.use(bodyParser.json());
 
