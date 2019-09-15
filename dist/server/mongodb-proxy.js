@@ -6,12 +6,16 @@ const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 var config = require('config');
 var Stopwatch = require("statman-stopwatch");
-var moment = require('moment')
+var moment = require('moment');
+
+// for the query eval
+const ObjectID = require('mongodb').ObjectID;
+const Binary = require('mongodb').Binary;
 
 app.use(bodyParser.json());
 
 // Called by test
-app.all('/', function(req, res, next) 
+app.all('/', function(req, res, next)
 {
   logRequest(req.body, "/")
   setCORSHeaders(res);
@@ -20,14 +24,14 @@ app.all('/', function(req, res, next)
   {
     if ( err != null )
     {
-      res.send({ status : "error", 
-                 display_status : "Error", 
+      res.send({ status : "error",
+                 display_status : "Error",
                  message : 'MongoDB Connection Error: ' + err.message });
     }
     else
     {
-      res.send( { status : "success", 
-                  display_status : "Success", 
+      res.send( { status : "success",
+                  display_status : "Success",
                   message : 'MongoDB Connection test OK' });
     }
     next()
@@ -41,7 +45,7 @@ app.all('/search', function(req, res, next)
   setCORSHeaders(res);
 
   // Generate an id to track requests
-  const requestId = ++requestIdCounter                 
+  const requestId = ++requestIdCounter
   // Add state for the queries in this request
   var queryStates = []
   requestsPending[requestId] = queryStates
@@ -97,12 +101,12 @@ function queryFinished(requestId, queryId, results, res, next)
         break
       }
     }
-  
+
     // If query done, send back results
     if (done)
     {
       // Concatenate results
-      output = []    
+      output = []
       for ( var i = 0; i < queryStatus.length; i++)
       {
         var queryResults = queryStatus[i].results
@@ -134,7 +138,7 @@ app.all('/query', function(req, res, next)
                      }
 
     // Generate an id to track requests
-    const requestId = ++requestIdCounter                 
+    const requestId = ++requestIdCounter
     // Add state for the queries in this request
     var queryStates = []
     requestsPending[requestId] = queryStates
@@ -162,7 +166,7 @@ app.all('/query', function(req, res, next)
   }
 );
 
-app.use(function(error, req, res, next) 
+app.use(function(error, req, res, next)
 {
   // Any request to this server will get here, and will send an HTTP
   // response with the error message
@@ -176,17 +180,17 @@ app.listen(serverConfig.port);
 
 console.log("Server is listening on port " + serverConfig.port);
 
-function setCORSHeaders(res) 
+function setCORSHeaders(res)
 {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST");
-  res.setHeader("Access-Control-Allow-Headers", "accept, content-type");  
+  res.setHeader("Access-Control-Allow-Headers", "accept, content-type");
 }
 
 function forIn(obj, processFunc)
 {
     var key;
-    for (key in obj) 
+    for (key in obj)
     {
         var value = obj[key]
         processFunc(obj, key, value)
@@ -202,7 +206,7 @@ function parseQuery(query, substitutions)
   doc = {}
   queryErrors = []
 
-  query = query.trim() 
+  query = query.trim()
   if (query.substring(0,3) != "db.")
   {
     queryErrors.push("Query must start with db.")
@@ -224,15 +228,15 @@ function parseQuery(query, substitutions)
     if (parts.length >= 2)
     {
       doc.operation = parts.pop().trim()
-      doc.collection = parts.join('.')       
+      doc.collection = parts.join('.')
     }
     else
     {
       queryErrors.push("Invalid collection and operation syntax")
     }
-  
+
     // Args is the rest up to the last bracket
-    var closeBracketIndex = query.indexOf(')', openBracketIndex)
+    var closeBracketIndex = query.lastIndexOf(')')
     if (closeBracketIndex == -1)
     {
       queryErrors.push("Can't find last bracket")
@@ -244,7 +248,7 @@ function parseQuery(query, substitutions)
       {
         // Wrap args in array syntax so we can check for optional options arg
         args = '[' + args + ']'
-        docs = JSON.parse(args)
+        docs = eval(args)
         // First Arg is pipeline
         doc.pipeline = docs[0]
         // If we have 2 top level args, second is agg options
@@ -274,7 +278,7 @@ function parseQuery(query, substitutions)
       }
     }
   }
-  
+
   if (queryErrors.length > 0 )
   {
     doc.err = new Error('Failed to parse query - ' + queryErrors.join(':'))
@@ -288,7 +292,7 @@ function parseQuery(query, substitutions)
 
 function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
 {
-  MongoClient.connect(body.db.url, function(err, client) 
+  MongoClient.connect(body.db.url, function(err, client)
   {
     if ( err != null )
     {
@@ -297,13 +301,13 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
     else
     {
       const db = client.db(body.db.db);
-  
+
       // Get the documents collection
       const collection = db.collection(queryArgs.collection);
       logQuery(queryArgs.pipeline, queryArgs.agg_options)
       var stopwatch = new Stopwatch(true)
 
-      collection.aggregate(queryArgs.pipeline, queryArgs.agg_options).toArray(function(err, docs) 
+      collection.aggregate(queryArgs.pipeline, queryArgs.agg_options).toArray(function(err, docs)
         {
           if ( err != null )
           {
@@ -323,7 +327,7 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
               {
                 results = getTableResults(docs)
               }
-      
+
               client.close();
               var elapsedTimeMs = stopwatch.stop()
               logTiming(body, elapsedTimeMs)
@@ -343,7 +347,7 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
 function getTableResults(docs)
 {
   var columns = {}
-  
+
   // Build superset of columns
   for ( var i = 0; i < docs.length; i++)
   {
@@ -354,7 +358,7 @@ function getTableResults(docs)
       // See if we need to add a new column
       if ( !(propName in columns) )
       {
-        columns[propName] = 
+        columns[propName] =
         {
           text : propName,
           type : "text"
@@ -362,7 +366,7 @@ function getTableResults(docs)
       }
     }
   }
-  
+
   // Build return rows
   rows = []
   for ( var i = 0; i < docs.length; i++)
@@ -384,7 +388,7 @@ function getTableResults(docs)
     }
     rows.push(row)
   }
-  
+
   var results = {}
   results["table"] = {
     columns :  Object.values(columns),
@@ -411,7 +415,7 @@ function getTimeseriesResults(docs)
       dp = { 'target' : tg, 'datapoints' : [] }
       results[tg] = dp
     }
-    
+
     results[tg].datapoints.push([doc['value'], doc['ts'].getTime()])
   }
   return results
@@ -425,9 +429,9 @@ function doTemplateQuery(requestId, queryArgs, db, res, next)
   {
     // Database Name
     const dbName = db.db
-    
+
     // Use connect method to connect to the server
-    MongoClient.connect(db.url, function(err, client) 
+    MongoClient.connect(db.url, function(err, client)
     {
       if ( err != null )
       {
@@ -443,11 +447,11 @@ function doTemplateQuery(requestId, queryArgs, db, res, next)
         const db = client.db(dbName);
         // Get the documents collection
         const collection = db.collection(queryArgs.collection);
-          
-        collection.aggregate(queryArgs.pipeline).toArray(function(err, result) 
+
+        collection.aggregate(queryArgs.pipeline).toArray(function(err, result)
           {
             assert.equal(err, null)
-    
+
             output = []
             for ( var i = 0; i < result.length; i++)
             {
@@ -495,14 +499,14 @@ function logTiming(body, elapsedTimeMs)
   {
     var range = new Date(body.range.to) - new Date(body.range.from)
     var diff = moment.duration(range)
-    
+
     console.log("Request: " + intervalCount(diff, body.interval, body.intervalMs) + " - Returned in " + elapsedTimeMs.toFixed(2) + "ms")
   }
 }
 
 // Take a range as a moment.duration and a grafana interval like 30s, 1m etc
 // And return the number of intervals that represents
-function intervalCount(range, intervalString, intervalMs) 
+function intervalCount(range, intervalString, intervalMs)
 {
   // Convert everything to seconds
   var rangeSeconds = range.asSeconds()
