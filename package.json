@@ -48,7 +48,7 @@
     "config": "^1.30.0",
     "express": "^4.16.3",
     "fs": "0.0.1-security",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.13",
     "mocha": "^5.2.0",
     "moment": "^2.22.1",
     "mongodb": "^3.0.8",
