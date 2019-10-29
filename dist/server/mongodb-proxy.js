@@ -202,84 +202,88 @@ function parseQuery(query, substitutions)
   doc = {}
   queryErrors = []
 
-  query = query.trim() 
-  if (query.substring(0,3) != "db.")
-  {
-    queryErrors.push("Query must start with db.")
-    return null
-  }
+  try {
+    query = query.trim()
+    if (query.substring(0,3) != "db." && query.substring(0,3) != "db[")
+    {
+      queryErrors.push("Query must start with db.")
+      console.log("Query must start with db. or db[]")
+      return null
+    }
 
-  // Query is of the form db.<collection>.aggregate or db.<collection>.find
-  // Split on the first ( after db.
-  var openBracketIndex = query.indexOf('(', 3)
-  if (openBracketIndex == -1)
-  {
-    queryErrors.push("Can't find opening bracket")
-  }
-  else
-  {
-    // Split the first bit - it's the collection name and operation ( must be aggregate )
-    var parts = query.substring(3, openBracketIndex).split('.')
-    // Collection names can have .s so last part is operation, rest is the collection name
-    if (parts.length >= 2)
+    // Query is of the form db.<collection>.aggregate or db.<collection>.find
+    // Split on the first ( after db.
+    var openBracketIndex = query.indexOf('(', 3)
+    if (openBracketIndex == -1)
     {
-      doc.operation = parts.pop().trim()
-      doc.collection = parts.join('.')       
+      queryErrors.push("Can't find opening bracket")
     }
     else
     {
-      queryErrors.push("Invalid collection and operation syntax")
-    }
-  
-    // Args is the rest up to the last bracket
-    var closeBracketIndex = query.indexOf(')', openBracketIndex)
-    if (closeBracketIndex == -1)
-    {
-      queryErrors.push("Can't find last bracket")
-    }
-    else
-    {
-      var args = query.substring(openBracketIndex + 1, closeBracketIndex)
-      if ( doc.operation == 'aggregate')
+      // Split the first bit - it's the collection name and operation ( must be aggregate )
+      var parts = query.substring(3, openBracketIndex).split('.')
+      // Collection names can have .s so last part is operation, rest is the collection name
+      if (parts.length >= 2)
       {
-        // Wrap args in array syntax so we can check for optional options arg
-        args = '[' + args + ']'
-        docs = JSON.parse(args)
-        // First Arg is pipeline
-        doc.pipeline = docs[0]
-        // If we have 2 top level args, second is agg options
-        if ( docs.length == 2 )
-        {
-          doc.agg_options = docs[1]
-        }
-        // Replace with substitutions
-        for ( var i = 0; i < doc.pipeline.length; i++)
-        {
-            var stage = doc.pipeline[i]
-            forIn(stage, function (obj, key, value)
-                {
-                    if ( typeof(value) == "string" )
-                    {
-                        if ( value in substitutions )
-                        {
-                            obj[key] = substitutions[value]
-                        }
-                    }
-                })
-          }
+        doc.operation = parts.pop().trim()
+        doc.collection = parts.join('.').replace(/\'|\"|\[|\]/g, '')
       }
       else
       {
-        queryErrors.push("Unknown operation " + doc.operation + ", only aggregate supported")
+        queryErrors.push("Invalid collection and operation syntax")
+      }
+    
+      // Args is the rest up to the last bracket
+      var closeBracketIndex = query.indexOf(')', openBracketIndex)
+      if (closeBracketIndex == -1)
+      {
+        queryErrors.push("Can't find last bracket")
+      }
+      else
+      {
+        var args = query.substring(openBracketIndex + 1, closeBracketIndex)
+        if ( doc.operation == 'aggregate')
+        {
+          // Wrap args in array syntax so we can check for optional options arg
+          args = '[' + args + ']'
+          docs = JSON.parse(args)
+          // First Arg is pipeline
+          doc.pipeline = docs[0]
+          // If we have 2 top level args, second is agg options
+          if ( docs.length == 2 )
+          {
+            doc.agg_options = docs[1]
+          }
+          // Replace with substitutions
+          for ( var i = 0; i < doc.pipeline.length; i++)
+          {
+              var stage = doc.pipeline[i]
+              forIn(stage, function (obj, key, value)
+                  {
+                      if ( typeof(value) == "string" )
+                      {
+                          if ( value in substitutions )
+                          {
+                              obj[key] = substitutions[value]
+                          }
+                      }
+                  })
+            }
+        }
+        else
+        {
+          queryErrors.push("Unknown operation " + doc.operation + ", only aggregate supported")
+        }
       }
     }
+  } catch (error) {
+    queryErrors.push(error.message)
   }
-  
   if (queryErrors.length > 0 )
   {
     doc.err = new Error('Failed to parse query - ' + queryErrors.join(':'))
   }
-
+  
   return doc
 }
 
