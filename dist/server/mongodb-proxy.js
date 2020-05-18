@@ -265,6 +265,15 @@ function parseQuery(query, substitutions)
                             obj[key] = substitutions[value]
                         }
                     }
+					if ( typeof(value) == "object" && Array.isArray(value) )
+					{
+						if ( value[0].includes('{') )
+						{
+							// remove accolade and create array
+							var val = value[0].replace('{','').replace('}','')
+							obj[key] = val.split(',')
+						}
+					}
                 })
           }
       }
@@ -411,8 +420,19 @@ function getTimeseriesResults(docs)
       dp = { 'target' : tg, 'datapoints' : [] }
       results[tg] = dp
     }
-    
-    results[tg].datapoints.push([doc['value'], doc['ts'].getTime()])
+	var valueName = 'value'
+	if ( !(valueName in doc) )
+	{
+		// search another name of column 
+		for (var propName in doc )
+		{
+			if ( propName != 'ts' )
+			{
+				valueName = propName
+			}
+		}
+	}
+    results[tg].datapoints.push([doc[valueName], doc['ts'].getTime()])
   }
   return results
 }
