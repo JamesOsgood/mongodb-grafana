@@ -188,13 +188,21 @@ function forIn(obj, processFunc)
     var key;
     for (key in obj) 
     {
-        var value = obj[key]
-        processFunc(obj, key, value)
-        if ( value != null && typeof(value) == "object")
+        obj[key] = processFunc(obj, key, obj[key])
+        if ( obj[key] != null && typeof(obj[key]) == "object")
         {
-            forIn(value, processFunc)
+            obj[key] = forIn(obj[key], processFunc)
         }
     }
+
+    if (
+      !Array.isArray(obj) && Object.keys(obj).length === 1 &&
+      typeof obj['$date'] !== 'undefined'
+    ) {
+      return new Date(obj['$date']);
+    }
+
+    return obj;
 }
 
 function parseQuery(query, substitutions)
@@ -256,15 +264,17 @@ function parseQuery(query, substitutions)
         for ( var i = 0; i < doc.pipeline.length; i++)
         {
             var stage = doc.pipeline[i]
-            forIn(stage, function (obj, key, value)
+            stage = forIn(stage, function (obj, key, value)
                 {
                     if ( typeof(value) == "string" )
                     {
                         if ( value in substitutions )
                         {
-                            obj[key] = substitutions[value]
+                            return substitutions[value]
                         }
                     }
+
+                    return value;
                 })
           }
       }
