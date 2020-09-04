@@ -51,7 +51,7 @@
     "lodash": "^4.17.10",
     "mocha": "^5.2.0",
     "moment": "^2.22.1",
-    "mongodb": "^3.0.8",
+    "mongodb": "^3.1.13",
     "statman-stopwatch": "^2.7.0"
   },
   "homepage": "https://github.com/JamesOsgood/mongodb-grafana#readme"
