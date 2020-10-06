@@ -7,6 +7,8 @@ const assert = require('assert');
 var config = require('config');
 var Stopwatch = require("statman-stopwatch");
 var moment = require('moment')
+const { EJSON } = require('bson');
+var mongoParser = require('mongodb-query-parser');
 
 app.use(bodyParser.json());
 
@@ -49,6 +51,7 @@ app.all('/search', function(req, res, next)
   queryArgs = parseQuery(req.body.target, {})
   if (queryArgs.err != null)
   {
+    console.log("Error in query parsing")
     queryError(requestId, queryArgs.err, next)
   }
   else
@@ -147,6 +150,7 @@ app.all('/query', function(req, res, next)
       queryArgs.type = tg.type
       if (queryArgs.err != null)
       {
+        console.log("Error in query parsing")
         queryError(requestId, queryArgs.err, next)
         error = true
       }
@@ -232,7 +236,7 @@ function parseQuery(query, substitutions)
     }
   
     // Args is the rest up to the last bracket
-    var closeBracketIndex = query.indexOf(')', openBracketIndex)
+    var closeBracketIndex = query.lastIndexOf(')')
     if (closeBracketIndex == -1)
     {
       queryErrors.push("Can't find last bracket")
@@ -244,7 +248,7 @@ function parseQuery(query, substitutions)
       {
         // Wrap args in array syntax so we can check for optional options arg
         args = '[' + args + ']'
-        docs = JSON.parse(args)
+        docs = mongoParser(args)
         // First Arg is pipeline
         doc.pipeline = docs[0]
         // If we have 2 top level args, second is agg options
@@ -308,6 +312,7 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
           if ( err != null )
           {
             client.close();
+	    console.log("Error running aggregation query")
             queryError(requestId, err, next)
           }
           else
@@ -332,6 +337,7 @@ function runAggregateQuery( requestId, queryId, body, queryArgs, res, next )
             }
             catch(err)
             {
+	      console.log("Error returning results")
               queryError(requestId, err, next)
             }
           }
@@ -471,7 +477,7 @@ function logRequest(body, type)
 {
   if (serverConfig.logRequests)
   {
-    console.log("REQUEST: " + type + ":\n" + JSON.stringify(body,null,2))
+    console.log("REQUEST: " + type + ":\n" + EJSON.stringify(body, null, 2))
   }
 }
 
@@ -480,17 +486,18 @@ function logQuery(query, options)
   if (serverConfig.logQueries)
   {
     console.log("Query:")
-    console.log(JSON.stringify(query,null,2))
+    console.log(EJSON.stringify(query,null,2))
     if ( options != null )
     {
       console.log("Query Options:")
-      console.log(JSON.stringify(options,null,2))
+      console.log(EJSON.stringify(options,null,2))
     }
   }
 }
 
 function logTiming(body, elapsedTimeMs)
 {
+
   if (serverConfig.logTimings)
   {
     var range = new Date(body.range.to) - new Date(body.range.from)
