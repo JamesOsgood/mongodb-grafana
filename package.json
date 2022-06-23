@@ -35,7 +35,7 @@
     "grunt-execute": "~0.2.2",
     "grunt-mocha-test": "^0.13.3",
     "grunt-systemjs-builder": "^1.0.0",
-    "jsdom": "~9.12.0",
+    "jsdom": "~16.5.0",
     "load-grunt-tasks": "^3.5.2",
     "prunk": "^1.3.0",
     "q": "^1.5.0"
