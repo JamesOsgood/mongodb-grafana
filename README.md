@@ -21,6 +21,12 @@ Allows MongoDB to be used as a data source for Grafana by providing a proxy to c
 * Run `npm install` to install the node.js dependencies
 * Run `npm run server` to start the REST API proxy to MongoDB. By default, the server listens on http://localhost:3333
 
+### Install using docker
+
+* Use `docker compose up` to start the mongodb_proxy, mongodb and grafana
+* Execute `docker cp ./* grafana:/var/lib/grafana/plugins/mongodb-grafana` to install the mongodb proxy plugin in grafana.
+* Restart the grafana container to load the plugin: `docker container restart grafana`
+
 ## Examples
 
 Create a new data source of type MongoDB as shown below. The MongoDB details are :
